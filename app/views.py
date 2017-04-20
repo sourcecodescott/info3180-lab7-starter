@@ -21,6 +21,46 @@ def home():
     return render_template('home.html')
 
 
+@app.route('/api/thumbnails')
+def get_thumbnails():
+    data = {
+        'error': "null",
+        'message': "Success",
+        'thumbnails': getimages()
+    }
+
+    return jsonify(data)
+
+
+def getimages():
+    url = "https://www.walmart.com/ip/54649026"
+    result = requests.get(url)
+    soup = BeautifulSoup(result.text, "html.parser")
+
+    imgList = []
+
+    # This will look for a meta tag with the og:image property
+    og_image = (soup.find('meta', property='og:image') or
+                soup.find('meta', attrs={'name': 'og:image'}))
+    if og_image and og_image['content']:
+        imgList.append(og_image['content'])
+
+    # This will look for a link tag with a rel attribute set to 'image_src'
+    thumbnail_spec = soup.find('link', rel='image_src')
+    if thumbnail_spec and thumbnail_spec['href']:
+        imgList.append(thumbnail_spec['href'])
+
+    for img in soup.findAll("img", src=True):
+        if img["src"] not in imgList:  # removes duplication of urls
+            imgList.append(img['src'])
+    return imgList
+
+
+@app.route('/thumbnails/view')
+def viewthumbnails():
+    return render_template('view.html')
+
+
 ###
 # The functions below should be applicable to all Flask apps.
 ###
